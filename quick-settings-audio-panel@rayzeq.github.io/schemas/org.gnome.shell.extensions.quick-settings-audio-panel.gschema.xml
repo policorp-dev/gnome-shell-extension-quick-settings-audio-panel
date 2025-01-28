@@ -11,18 +11,18 @@
         <choice value="merged-panel" />
         <choice value="separate-indicator" />
       </choices>
-      <default>"independent-panel"</default>
+      <default>"merged-panel"</default>
     </key>
     <key name="merged-panel-position" type="s">
       <choices>
         <choice value="top" />
         <choice value="bottom" />
       </choices>
-      <default>"bottom"</default>
+      <default>"top"</default>
     </key>
 
     <key name="always-show-input-volume-slider" type="b">
-      <default>false</default>
+      <default>true</default>
     </key>
     <key name="remove-output-volume-slider" type="b">
       <default>false</default>
