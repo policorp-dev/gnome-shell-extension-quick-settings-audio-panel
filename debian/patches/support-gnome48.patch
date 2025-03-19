@@ -1,0 +1,13 @@
+Index: gnome-shell-extension-quick-settings-audio-panel/quick-settings-audio-panel@rayzeq.github.io/extension.js
+===================================================================
+--- gnome-shell-extension-quick-settings-audio-panel.orig/quick-settings-audio-panel@rayzeq.github.io/extension.js
++++ gnome-shell-extension-quick-settings-audio-panel/quick-settings-audio-panel@rayzeq.github.io/extension.js
+@@ -18,7 +18,7 @@ import GObject from 'gi://GObject';
+ import St from 'gi://St';
+ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+-import { MediaSection } from 'resource:///org/gnome/shell/ui/mpris.js';
++import * as Mpris from 'resource:///org/gnome/shell/ui/mpris.js';
+ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+ import { QuickSettingsMenu } from 'resource:///org/gnome/shell/ui/quickSettings.js';
+ import { LibPanel, Panel } from './libs/libpanel/main.js';
