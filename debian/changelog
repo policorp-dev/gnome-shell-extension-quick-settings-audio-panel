@@ -1,3 +1,9 @@
+gnome-shell-extension-quick-settings-audio-panel (1.0.2) stable; urgency=medium
+
+  * add tradução pt-br
+
+ -- OEM Policorp <suporte@policorp.com.br>  Fri, 21 Mar 2025 11:33:54 -0300
+
 gnome-shell-extension-quick-settings-audio-panel (1.0.1) stable; urgency=medium
 
   * Add versão gnome 48
