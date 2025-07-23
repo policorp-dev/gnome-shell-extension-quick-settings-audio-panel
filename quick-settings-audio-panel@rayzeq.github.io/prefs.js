@@ -18,7 +18,7 @@ export default class QSAPPreferences extends ExtensionPreferences {
         window.add(this.makeLibpanelSettingsPage(libpanel_settings));
     }
     makeExtensionSettingsPage(settings) {
-        const page = new Adw.PreferencesPage({ title: "Extension settings", icon_name: "preferences-system-symbolic" });
+        const page = new Adw.PreferencesPage({ title: _("Extension settings"), icon_name: "preferences-system-symbolic" });
         // ====================================== Main group ======================================
         const main_group = new PreferencesGroup(settings);
         main_group.add_combobox("panel-type", {
@@ -159,7 +159,7 @@ export default class QSAPPreferences extends ExtensionPreferences {
     }
     makeLibpanelSettingsPage(settings) {
         const page = new Adw.PreferencesPage({
-            title: "Libpanel settings",
+            title: _("Libpanel settings"),
             icon_name: "view-grid-symbolic"
         });
         const group = new PreferencesGroup(settings, {
@@ -230,7 +230,7 @@ function PreferencesRowList(Base) {
         add_file_chooser(key, properties) {
             const row = new Adw.EntryRow({ ...properties, show_apply_button: false });
             this.settings.bind(key, row, "text", Gio.SettingsBindFlags.DEFAULT);
-            const chooser_button = new Gtk.Button({ label: "Choose file...", has_frame: false });
+            const chooser_button = new Gtk.Button({ label: _("Choose file..."), has_frame: false });
             chooser_button.connect("clicked", () => {
                 const dialog = new Gtk.FileDialog();
                 dialog.set_initial_file(Gio.File.new_for_path(row.text));
