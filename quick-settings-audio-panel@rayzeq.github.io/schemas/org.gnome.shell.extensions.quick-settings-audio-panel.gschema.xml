@@ -11,23 +11,29 @@
         <choice value="merged-panel" />
         <choice value="separate-indicator" />
       </choices>
-      <default>"merged-panel"</default>
+      <default>"independent-panel"</default>
     </key>
     <key name="merged-panel-position" type="s">
       <choices>
         <choice value="top" />
         <choice value="bottom" />
       </choices>
-      <default>"top"</default>
+      <default>"bottom"</default>
     </key>
 
     <key name="always-show-input-volume-slider" type="b">
-      <default>true</default>
+      <default>false</default>
+    </key>
+    <key name="ignore-virtual-capture-streams" type="b">
+      <default>false</default>
     </key>
     <key name="remove-output-volume-slider" type="b">
       <default>false</default>
     </key>
     <key name="master-volume-sliders-show-current-device" type="b">
+      <default>false</default>
+    </key>
+    <key name="add-button-applications-output-reset-to-default" type="b">
       <default>false</default>
     </key>
 
@@ -47,7 +53,7 @@
       <default>false</default>
     </key>
     <key name="autohide-profile-switcher" type="b">
-      <default>false</default>
+      <default>true</default>
     </key>
 
     <key name="move-output-volume-slider" type="b">
@@ -59,6 +65,12 @@
 
     <key name="create-perdevice-volume-sliders" type="b">
       <default>false</default>
+    </key>
+    <key name="perdevice-volume-sliders-change-button" type="b">
+      <default>true</default>
+    </key>
+    <key name="perdevice-volume-sliders-change-menu" type="b">
+      <default>true</default>
     </key>
     <key name="perdevice-volume-sliders-filter-mode" type="s">
       <choices>
