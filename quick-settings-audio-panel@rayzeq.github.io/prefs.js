@@ -1,4 +1,5 @@
 import Adw from 'gi://Adw';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
@@ -18,7 +19,7 @@ export default class QSAPPreferences extends ExtensionPreferences {
         window.add(this.makeLibpanelSettingsPage(libpanel_settings));
     }
     makeExtensionSettingsPage(settings) {
-        const page = new Adw.PreferencesPage({ title: _("Extension settings"), icon_name: "preferences-system-symbolic" });
+        const page = new Adw.PreferencesPage({ title: "Extension settings", icon_name: "preferences-system-symbolic" });
         // ====================================== Main group ======================================
         const main_group = new PreferencesGroup(settings);
         main_group.add_combobox("panel-type", {
@@ -184,11 +185,46 @@ export default class QSAPPreferences extends ExtensionPreferences {
         page.add(widgets_order_group);
         page.add(perdevice_volume_sliders_filters_group);
         page.add(applications_volume_sliders_filters_group);
+        page.add(this.make_profile_renamer(settings));
         return page;
+    }
+    make_profile_renamer(settings) {
+        const group = new PreferencesGroup(settings, {
+            title: _("Profile renamer"),
+            description: _("Allows you to rename profiles of audio devices (only effective in the profile switcher)")
+        });
+        // Can't use Gvc in prefs, we have to rely on infos saved by the extension.
+        const renames = settings.get_value("profiles-renames").recursiveUnpack();
+        for (const [card, profiles] of Object.entries(renames)) {
+            if (Object.keys(profiles).length === 0)
+                continue;
+            const card_row = new Adw.ExpanderRow({ title: card });
+            for (const [profile, [original_name, display_name]] of Object.entries(profiles)) {
+                const row = new Adw.EntryRow({ title: original_name, text: display_name, show_apply_button: true });
+                row.connect("apply", () => {
+                    const renames = settings.get_value("profiles-renames").recursiveUnpack();
+                    renames[card][profile] = [original_name, row.text];
+                    settings.set_value("profiles-renames", new GLib.Variant("a{sa{s(ss)}}", renames));
+                });
+                const reset_button = new Gtk.Button({
+                    icon_name: "view-refresh-symbolic",
+                    has_frame: false,
+                    tooltip_text: _("Restore original name"),
+                });
+                reset_button.connect("clicked", () => {
+                    row.text = original_name;
+                    row.emit("apply");
+                });
+                row.add_suffix(reset_button);
+                card_row.add_row(row);
+            }
+            group.add(card_row);
+        }
+        return group;
     }
     makeLibpanelSettingsPage(settings) {
         const page = new Adw.PreferencesPage({
-            title: _("Libpanel settings"),
+            title: "Libpanel settings",
             icon_name: "view-grid-symbolic"
         });
         const group = new PreferencesGroup(settings, {
@@ -259,7 +295,7 @@ function PreferencesRowList(Base) {
         add_file_chooser(key, properties) {
             const row = new Adw.EntryRow({ ...properties, show_apply_button: false });
             this.settings.bind(key, row, "text", Gio.SettingsBindFlags.DEFAULT);
-            const chooser_button = new Gtk.Button({ label: _("Choose file..."), has_frame: false });
+            const chooser_button = new Gtk.Button({ label: "Choose file...", has_frame: false });
             chooser_button.connect("clicked", () => {
                 const dialog = new Gtk.FileDialog();
                 dialog.set_initial_file(Gio.File.new_for_path(row.text));
