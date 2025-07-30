@@ -1,28 +1,33 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: Quick Settings Audio Panel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-13 15:34+0100\n"
-"PO-Revision-Date: 2025-03-13 14:18+03100\n"
-"Last-Translator: Lucas Salles <lucas.salles@policorp.com.br>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: PT_BR\n"
+"POT-Creation-Date: 2025-07-15 01:15+0200\n"
+"PO-Revision-Date: 2025-07-30 14:11-0400\n"
+"Last-Translator: Lucas Salles\n"
+"Language-Team: \n"
+"Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.6\n"
+
+#: dist/extension.js:363
+msgid "Reset all applications to default output"
+msgstr "Redefinir todos os aplicativos para a saída padrão"
 
 #: dist/prefs.js:25
 msgid "Where the panel should be"
 msgstr "Onde o painel deve estar"
 
 #: dist/prefs.js:27
-msgid "Independant panel"
+msgid "Independent panel"
 msgstr "Painel independente"
 
 #: dist/prefs.js:28
@@ -43,261 +48,307 @@ msgstr "Onde o novo painel deve ser localizado em relação ao painel principal"
 
 #: dist/prefs.js:37
 msgid "Top"
-msgstr "Em cima"
+msgstr "Topo"
 
 #: dist/prefs.js:38
 msgid "Bottom"
-msgstr "Em baixo"
+msgstr "Baixo"
 
 #: dist/prefs.js:46
 msgid "Always show microphone volume slider"
-msgstr "Sempre mostrar o controle deslizante de volume do microfone"
+msgstr "Sempre mostrar o controle de volume do microfone"
 
 #: dist/prefs.js:47
 msgid "Show even when there is no application recording audio"
-msgstr "Mostrar mesmo quando não há nenhum aplicativo gravando áudio"
+msgstr "Mostrar mesmo quando nenhum aplicativo estiver gravando áudio"
 
 #: dist/prefs.js:50
-msgid "Remove the main output volume slider"
-msgstr "Remova o controle deslizante de volume de saída principal"
+msgid "Don't show the microphone indicator when there is only virtual captures"
+msgstr ""
+"Não mostrar o indicador do microfone quando houver apenas capturas virtuais"
 
-#: dist/prefs.js:51
-msgid "This is useful if you enabled the per-device volume sliders"
-msgstr "Isso é útil se você habilitou os controles deslizantes de volume por dispositivo"
+#: dist/prefs.js:53
+msgid "Remove the main output volume slider"
+msgstr "Remover o controle de volume da saída principal"
 
 #: dist/prefs.js:54
-msgid "Show the currently selected device for the main volume sliders"
-msgstr "Mostrar o dispositivo selecionado atualmente para os controles deslizantes de volume principais"
+msgid "This is useful if you enabled the per-device volume sliders"
+msgstr "Isso é útil se você ativou os controles de volume por dispositivo"
 
 #: dist/prefs.js:57
-msgid "Do not apply custom CSS"
-msgstr "Não aplique CSS personalizado"
+msgid "Show the currently selected device for the main volume sliders"
+msgstr ""
+"Mostrar o dispositivo atualmente selecionado para os controles de volume "
+"principais"
 
-#: dist/prefs.js:58
-msgid "Disable the CSS in this extension that could override your theme"
-msgstr "Desabilite o CSS nesta extensão que pode substituir seu tema"
+#: dist/prefs.js:60
+msgid "Add a button to reset all applications to the default output"
+msgstr ""
+"Não mostrar o indicador do microfone quando houver apenas capturas virtuais"
 
 #: dist/prefs.js:61
+msgid ""
+"This button can be found in the device chooser of the main output slider"
+msgstr ""
+"Este botão pode ser encontrado no seletor de dispositivos do controle "
+"deslizante de saída principal"
+
+#: dist/prefs.js:64
+msgid "Do not apply custom CSS"
+msgstr "Não aplicar CSS personalizado"
+
+#: dist/prefs.js:65
+msgid "Disable the CSS in this extension that could override your theme"
+msgstr "Desativar o CSS nesta extensão que poderia sobrescrever seu tema"
+
+#: dist/prefs.js:68
 msgid "Path to the <tt>pactl</tt> executable"
 msgstr "Caminho para o executável <tt>pactl</tt>"
 
-#: dist/prefs.js:66
+#: dist/prefs.js:73
 msgid "Auto-hide"
 msgstr "Ocultar automaticamente"
 
-#: dist/prefs.js:67
-msgid "Hide the profile switcher when the current device only have one profile"
-msgstr "Ocultar o alternador de perfil quando o dispositivo atual tiver apenas um perfil"
+#: dist/prefs.js:74
+msgid "Hide the profile switcher when the current device only has one profile"
+msgstr ""
+"Ocultar o seletor de perfil quando o dispositivo atual tiver apenas um perfil"
 
-#: dist/prefs.js:71
+#: dist/prefs.js:78
+msgid "Add a 'set as active' button"
+msgstr "Adicionar um botão 'definir como ativo'"
+
+#: dist/prefs.js:79
+msgid ""
+"This button, added on each device slider, has the same effect as clicking on "
+"that device in the main volume slider menu"
+msgstr ""
+"Este botão, adicionado em cada controle deslizante de dispositivo, tem o "
+"mesmo efeito de clicar naquele dispositivo no menu principal do controle "
+"deslizante de volume"
+
+#: dist/prefs.js:82
+msgid "Replace the 'set as active' button with a submenu"
+msgstr "Substitua o botão 'definir como ativo' por um submenu"
+
+#: dist/prefs.js:83
+msgid ""
+"For devices which have multiple ports, the button will be replaced by a "
+"submenu to choose which port will be active"
+msgstr ""
+"Para dispositivos que possuem múltiplas portas, o botão será substituído por "
+"um submenu para escolher qual porta estará ativa"
+
+#: dist/prefs.js:88
 msgid "Move media controls"
 msgstr "Mover controles de mídia"
 
-#: dist/prefs.js:72
+#: dist/prefs.js:89
 msgid ""
 "Move the media controls from the notifications panel instead of creating a "
 "new one"
 msgstr ""
-"Mova os controles de mídia do painel de notificações em vez de criar um "
-"novo"
+"Mover os controles de mídia do painel de notificações em vez de criar um novo"
 
-#: dist/prefs.js:76
+#: dist/prefs.js:93
 msgid "Put the sliders in submenu"
-msgstr "Coloque os controles deslizantes no submenu"
+msgstr "Colocar os controles deslizantes em um submenu"
 
-#: dist/prefs.js:77
+#: dist/prefs.js:94
 msgid ""
 "<span color=\"darkorange\" weight=\"bold\">This will disable the ability to "
 "change the output device per application</span>"
 msgstr ""
-"<span color=\"darkorange\" weight=\"bold\">Isso desabilitará a capacidade de "
-"alterar o dispositivo de saída por aplicação</span>"
+"<span color=\"darkorange\" weight=\"bold\">Isso desativará a capacidade de "
+"alterar o dispositivo de saída por aplicativo</span>"
 
-#: dist/prefs.js:81
+#: dist/prefs.js:98
 msgid "Elements order"
 msgstr "Ordem dos elementos"
 
-#: dist/prefs.js:82
+#: dist/prefs.js:99
 msgid "Reorder elements in the new panel"
 msgstr "Reordenar elementos no novo painel"
 
-#: dist/prefs.js:86
+#: dist/prefs.js:103
 msgid "Profile switcher"
-msgstr "Comutador de perfil"
-
-#: dist/prefs.js:87
-msgid "Allows you to quickly change the audio profile of the current device"
-msgstr "Permite que você altere rapidamente o perfil de áudio do dispositivo atual"
-
-#: dist/prefs.js:92
-msgid "Speaker / Headphone volume slider"
-msgstr "Auto-Falante / Fone de Ouvido slider do volume"
-
-#: dist/prefs.js:95
-msgid "Per-device volume sliders"
-msgstr "Controle slider de volume por dispositivo"
-
-#: dist/prefs.js:98
-msgid "Audio balance slider"
-msgstr "Controle slider de balanço de áudio"
-
-#: dist/prefs.js:101
-msgid "Microphone volume slider"
-msgstr "Controle slide de volume do Microphone"
+msgstr "Seletor de perfil"
 
 #: dist/prefs.js:104
+msgid "Allows you to quickly change the audio profile of the current device"
+msgstr ""
+"Permite que você altere rapidamente o perfil de áudio do dispositivo atual"
+
+#: dist/prefs.js:109
+msgid "Speaker / Headphone volume slider"
+msgstr "Controle de volume do Fone de Ouvido / Speaker"
+
+#: dist/prefs.js:112
+msgid "Per-device volume sliders"
+msgstr "Controles de volume por dispositivo"
+
+#: dist/prefs.js:116
+msgid "Audio balance slider"
+msgstr "Controle de balanço de áudio"
+
+#: dist/prefs.js:119
+msgid "Microphone volume slider"
+msgstr "Controle de volume do microfone"
+
+#: dist/prefs.js:122
 msgid "Media controls"
 msgstr "Controles de mídia"
 
-#: dist/prefs.js:108
+#: dist/prefs.js:126
 msgid "Applications mixer"
-msgstr "Mixer de aplicações"
+msgstr "Mixer de aplicativos"
 
-#: dist/prefs.js:114
+#: dist/prefs.js:132
 msgid "The same sliders you can find in pavucontrol or in the sound settings"
-msgstr "Os mesmos controles sliders que você pode encontrar no pavucontrol ou nas configurações de som"
+msgstr ""
+"Os mesmos controles que você pode encontrar no pavucontrol ou nas "
+"configurações de som"
 
-#: dist/prefs.js:116
+#: dist/prefs.js:134
 msgid ""
 "<span color=\"darkorange\" weight=\"bold\"><tt>pactl</tt> was not found, you "
 "won't be able to change the output device per application</span>"
 msgstr ""
-"<span color=\"darkorange\" weight=\"bold\"><tt>pactl (pulseaudio-utils)</tt> não foi encontrado, você "
-"não vai conseguir alterar o dispositivo de saída por aplicativo</span>"
+"<span color=\"darkorange\" weight=\"bold\"><tt>pactl</tt> não foi "
+"encontrado, você não poderá alterar o dispositivo de saída por aplicativo</"
+"span>"
 
-#: dist/prefs.js:121
+#: dist/prefs.js:139
 msgid ""
 "This slider allows you to change the balance of the current audio output"
 msgstr ""
-"Este controle deslizante permite que você altere o equilíbrio da saída de áudio atual"
+"Este controle deslizante permite que você altere o balanço da saída de áudio "
+"atual"
 
-#: dist/prefs.js:126
+#: dist/prefs.js:144 dist/prefs.js:155
 msgid ""
 "<span color=\"red\" weight=\"bold\">This feature needs <tt>pactl</tt></span>"
 msgstr ""
-"<span color=\"red\" weight=\"bold\">Este recurso precisa do <tt>pactl (pulseaudio-utils)</tt></span>"
+"<span color=\"red\" weight=\"bold\">Este recurso precisa do  <tt>pactl</tt></"
+"span>"
 
-#: dist/prefs.js:144
+#: dist/prefs.js:150
+msgid "This include for example the echo cancellation module"
+msgstr "Isso inclui, por exemplo, o módulo de cancelamento de eco"
+
+#: dist/prefs.js:173
 msgid "Per-device sliders filtering"
-msgstr "Filtragem de sliders de controles por dispositivo"
+msgstr "Filtragem dos controles por dispositivo"
 
-#: dist/prefs.js:145
+#: dist/prefs.js:174
 msgid ""
-"Allow you to filter the per-device volume sliders. The content of the "
+"Allows you to filter the per-device volume sliders. The content of the "
 "filters are <b>regexes</b> and are applied to the device's display name and "
 "pulseaudio name."
 msgstr ""
-"Permite que você filtre os controles sliders de volume por dispositivo. O conteúdo do "
-"filtros são <b>regexes</b> e são aplicados ao nome de exibição do dispositivo e"
-"nome pulseaudio."
+"Permite filtrar os controles de volume por dispositivo. O conteúdo dos "
+"filtros são <b>regexes (expressões regulares)<b> e são aplicados ao nome de "
+"exibição do dispositivo e ao nome do pulseaudio."
 
-#: dist/prefs.js:146
+#: dist/prefs.js:175
 msgid "Device name"
 msgstr "Nome do dispositivo"
 
-#: dist/prefs.js:150
+#: dist/prefs.js:179
 msgid "Application mixer filtering"
 msgstr "Filtragem do mixer de aplicativos"
 
-#: dist/prefs.js:151
+#: dist/prefs.js:180
 msgid ""
-"Allow you to filter the applications that show up in the application mixer "
+"Allows you to filter the applications that show up in the application mixer "
 "<b>using regexes</b>"
 msgstr ""
-"Permite filtrar os aplicativos que aparecem no mixer de aplicativos"
-"<b>usando regexes</b>"
+"Permite filtrar os aplicativos que aparecem no mixer de aplicativos "
+"<b>usando regexes (expressões regulares)<b>"
 
-#: dist/prefs.js:152
+#: dist/prefs.js:181
 msgid "Application name"
 msgstr "Nome do aplicativo"
 
-#: dist/prefs.js:162
-msgid "Libpanel settings"
-msgstr "Configurações do LibPanel"
-
-#: dist/prefs.js:166
-#: dist/prefs.js:212
+#: dist/prefs.js:195
 msgid "LibPanel settings"
 msgstr "Configurações do LibPanel"
 
-#: dist/prefs.js:167
+#: dist/prefs.js:196
 msgid ""
-"Those settings are not specific to this extension, they apply to every panels"
+"These settings are not specific to this extension, they apply to every panel"
 msgstr ""
-"Essas configurações não são específicas para esta extensão, elas se aplicam a todos os painéis"
+"Essas configurações não são específicas desta extensão, elas se aplicam a "
+"todos os painéis"
 
-#: dist/prefs.js:170
+#: dist/prefs.js:199
 msgid "Single-column mode"
 msgstr "Modo de coluna única"
 
-#: dist/prefs.js:171
+#: dist/prefs.js:200
 msgid ""
 "Only one column of panels will be allowed. Also prevents the panel from "
 "being put at the left/right of the screen by libpanel."
 msgstr ""
-"Apenas uma coluna de painéis será permitida. Também impede que o painel "
-"seja colocado à esquerda/direita da tela pelo libpanel."
+"Apenas uma coluna de painéis será permitida. Também impede que o painel seja "
+"colocado à esquerda/direita da tela pelo libpanel."
 
-#: dist/prefs.js:174
+#: dist/prefs.js:203
 msgid "Panel alignment"
 msgstr "Alinhamento do painel"
 
-#: dist/prefs.js:176
+#: dist/prefs.js:205
 msgid "Left"
 msgstr "Esquerda"
 
-#: dist/prefs.js:177
+#: dist/prefs.js:206
 msgid "Right"
 msgstr "Direita"
 
-#: dist/prefs.js:181
+#: dist/prefs.js:210
 msgid "Padding"
-msgstr "Preenchimento"
+msgstr "Espaçamento interno"
 
-#: dist/prefs.js:182
+#: dist/prefs.js:211
 msgid "Use this to override the default padding of the panels"
-msgstr "Use isto para substituir o preenchimento padrão dos painéis"
+msgstr "Use isto para sobrescrever o espaçamento interno padrão dos painéis"
 
-#: dist/prefs.js:185
+#: dist/prefs.js:214
 msgid "Row spacing"
 msgstr "Espaçamento entre linhas"
 
-#: dist/prefs.js:186
+#: dist/prefs.js:215
 msgid "Use this to override the default row spacing of the panels"
-msgstr "Use isto para substituir o espaçamento padrão das linhas dos painéis"
+msgstr "Use isto para sobrescrever o espaçamento padrão entre as linhas"
 
-#: dist/prefs.js:189
+#: dist/prefs.js:218
 msgid "Column spacing"
 msgstr "Espaçamento entre colunas"
 
-#: dist/prefs.js:190
+#: dist/prefs.js:219
 msgid "Use this to override the default column spacing of the panels"
-msgstr "Use isto para substituir o espaçamento padrão das colunas dos painéis"
+msgstr "Use isto para sobrescrever o espaçamento padrão entre as colunas"
 
-#: dist/prefs.js:275
+#: dist/prefs.js:304
 msgid "Filtering mode"
 msgstr "Modo de filtragem"
 
-#: dist/prefs.js:276
+#: dist/prefs.js:305
 msgid ""
-"On blacklist mode, matching elements are removed from the list. On whitelist "
+"On blocklist mode, matching elements are removed from the list. On allowlist "
 "mode, only matching elements will be shown"
 msgstr ""
-"No modo de lista de bloqueios os elementos correspondentes são removidos da lista." 
-"No modo de lista de permitidos, apenas os elementos correspondentes serão exibidos"
+"No modo de lista de bloqueio , os elementos correspondentes são removidos da "
+"lista. No modo de lista de permissão, apenas os elementos correspondentes "
+"serão mostrados"
 
-#: dist/prefs.js:278
-msgid "Blacklist"
-msgstr "Lita de Bloqueios"
+#: dist/prefs.js:307
+msgid "Blocklist"
+msgstr "Lista de bloqueio"
 
-#: dist/prefs.js:279
-msgid "Whitelist"
-msgstr "Lista de Permitidos"
+#: dist/prefs.js:308
+msgid "Allowlist"
+msgstr "Lista de permissões"
 
-#: dist/prefs.js:233
-msgid "Choose file..."
-msgstr "Escolha o arquivo..."
-
-#: dist/prefs.js:21
-msgid "Extension settings"
-msgstr "Configurações da extensão"
+#~ msgid "Whitelist"
+#~ msgstr "Lista de permissão"
