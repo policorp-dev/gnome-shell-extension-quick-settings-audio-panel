@@ -24,7 +24,7 @@ msgstr "Redefinir todos os aplicativos para a saída padrão"
 
 #: prefs.js:22
 msgid "Extension settings"
-msgstr "Configurações do LibPanel"
+msgstr "Configurações da Extensão"
 
 #: prefs.js:26
 msgid "Where the panel should be"
