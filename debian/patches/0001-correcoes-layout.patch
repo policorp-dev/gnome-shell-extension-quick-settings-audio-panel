@@ -1,0 +1,42 @@
+Index: gnome-shell-extension-quick-settings-audio-panel/quick-settings-audio-panel@rayzeq.github.io/schemas/org.gnome.shell.extensions.quick-settings-audio-panel.gschema.xml
+===================================================================
+--- gnome-shell-extension-quick-settings-audio-panel.orig/quick-settings-audio-panel@rayzeq.github.io/schemas/org.gnome.shell.extensions.quick-settings-audio-panel.gschema.xml
++++ gnome-shell-extension-quick-settings-audio-panel/quick-settings-audio-panel@rayzeq.github.io/schemas/org.gnome.shell.extensions.quick-settings-audio-panel.gschema.xml
+@@ -11,18 +11,18 @@
+         <choice value="merged-panel" />
+         <choice value="separate-indicator" />
+       </choices>
+-      <default>"independent-panel"</default>
++      <default>"merged-panel"</default>
+     </key>
+     <key name="merged-panel-position" type="s">
+       <choices>
+         <choice value="top" />
+         <choice value="bottom" />
+       </choices>
+-      <default>"bottom"</default>
++      <default>"top"</default>
+     </key>
+ 
+     <key name="always-show-input-volume-slider" type="b">
+-      <default>false</default>
++      <default>true</default>
+     </key>
+     <key name="ignore-virtual-capture-streams" type="b">
+       <default>false</default>
+@@ -31,7 +31,7 @@
+       <default>false</default>
+     </key>
+     <key name="master-volume-sliders-show-current-device" type="b">
+-      <default>false</default>
++      <default>true</default>
+     </key>
+     <key name="add-button-applications-output-reset-to-default" type="b">
+       <default>false</default>
+@@ -115,4 +115,4 @@
+       <default>{}</default>
+     </key>
+   </schema>
+-</schemalist>
+\ No newline at end of file
++</schemalist>
