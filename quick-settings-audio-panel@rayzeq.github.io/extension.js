@@ -14,32 +14,34 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Gvc from 'gi://Gvc';
 import St from 'gi://St';
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { gettext as _, Extension, InjectionManager } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import { MediaSection } from 'resource:///org/gnome/shell/ui/mpris.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import { QuickSettingsMenu } from 'resource:///org/gnome/shell/ui/quickSettings.js';
+import * as Volume from 'resource:///org/gnome/shell/ui/status/volume.js';
 import { LibPanel, Panel } from './libs/libpanel/main.js';
 import { update_settings } from './libs/preferences.js';
-import { ApplicationsMixer, ApplicationsMixerToggle, AudioProfileSwitcher, BalanceSlider, SinkMixer, waitProperty } from './libs/widgets.js';
+import { cleanup_idle_ids, get_pactl_path, spawn, wait_property } from './libs/utils.js';
+import { ApplicationsMixer, ApplicationsMixerToggle, AudioProfileSwitcher, BalanceSlider, MprisList, SinkMixer } from './libs/widgets.js';
 const DateMenu = Main.panel.statusArea.dateMenu;
 const QuickSettings = Main.panel.statusArea.quickSettings;
 const CalendarMessageList = DateMenu._messageList;
-const MediaSection_DateMenu = CalendarMessageList._mediaSection;
+const MessageView_DateMenu = CalendarMessageList._messageView;
 const SystemItem = QuickSettings._system._systemItem;
 // _volumeOutput is always defined here because `./libs/widgets.js` wait on it
 const OutputVolumeSlider = QuickSettings._volumeOutput._output;
 export default class QSAP extends Extension {
     settings;
     async enable() {
-        this.InputVolumeIndicator = await waitProperty(QuickSettings, '_volumeInput');
+        this.InputVolumeIndicator = await wait_property(QuickSettings, '_volumeInput');
         this.InputVolumeSlider = this.InputVolumeIndicator._input;
         this.settings = this.getSettings();
         update_settings(this.settings);
-        this._scasis_callback = this.settings.connect('changed::always-show-input-volume-slider', () => this._set_always_show_input(this.settings.get_boolean('always-show-input-volume-slider')));
-        this.settings.emit('changed::always-show-input-volume-slider', 'always-show-input-volume-slider');
+        this._extension_controller = new ExtensionController(this.settings, this.getLogger(), this.InputVolumeIndicator, OutputVolumeSlider);
         this._scscd_callback = this.settings.connect('changed::master-volume-sliders-show-current-device', () => {
             if (this.settings.get_boolean('master-volume-sliders-show-current-device')) {
                 this._patch_show_current_device(OutputVolumeSlider);
@@ -51,9 +53,22 @@ export default class QSAP extends Extension {
             }
         });
         this.settings.emit('changed::master-volume-sliders-show-current-device', 'master-volume-sliders-show-current-device');
+        this._scabaortd_callback = this.settings.connect('changed::add-button-applications-output-reset-to-default', () => {
+            if (this.settings.get_boolean('add-button-applications-output-reset-to-default')) {
+                this._add_reset_applications_output();
+            }
+            else {
+                this._remove_reset_applications_output();
+            }
+        });
+        this.settings.emit('changed::add-button-applications-output-reset-to-default', 'add-button-applications-output-reset-to-default');
         this._master_volumes = [];
         this._sc_callback = this.settings.connect('changed', (_, name) => {
-            if (name !== "autohide-profile-switcher") {
+            if (name !== "autohide-profile-switcher" &&
+                name !== "ignore-virtual-capture-streams" &&
+                name !== "always-show-input-volume-slider" &&
+                name !== "remove-output-volume-slider" &&
+                name !== "profiles-renames") {
                 this._refresh_panel();
             }
         });
@@ -63,21 +78,19 @@ export default class QSAP extends Extension {
         this.settings.disconnect(this._scscd_callback);
         this._unpatch_show_current_device(OutputVolumeSlider);
         this._unpatch_show_current_device(this.InputVolumeSlider);
-        this.settings.disconnect(this._scasis_callback);
+        this.settings.disconnect(this._scabaortd_callback);
+        this._remove_reset_applications_output();
         this.settings.disconnect(this._sc_callback);
-        for (const id of waitProperty.idle_ids) {
-            GLib.Source.remove(id);
-        }
-        waitProperty.idle_ids = null;
-        this._set_always_show_input(false);
+        cleanup_idle_ids();
         this._cleanup_panel();
+        this._extension_controller.destroy();
+        this._extension_controller = undefined;
         this.settings = null;
     }
     _refresh_panel() {
         this._cleanup_panel();
         const panel_type = this.settings.get_string("panel-type");
         const merged_panel_position = this.settings.get_string("merged-panel-position");
-        const remove_output_volume_slider = this.settings.get_boolean("remove-output-volume-slider");
         const move_output_volume_slider = this.settings.get_boolean('move-output-volume-slider');
         const move_input_volume_slider = this.settings.get_boolean('move-input-volume-slider');
         const create_mpris_controllers = this.settings.get_boolean("create-mpris-controllers");
@@ -86,7 +99,7 @@ export default class QSAP extends Extension {
         const create_balance_slider = this.settings.get_boolean('create-balance-slider');
         const create_profile_switcher = this.settings.get_boolean('create-profile-switcher');
         const widgets_order = this.settings.get_strv('widgets-order');
-        if (move_output_volume_slider || move_input_volume_slider || create_mpris_controllers || create_applications_volume_sliders || create_perdevice_volume_sliders || remove_output_volume_slider || create_balance_slider || create_profile_switcher) {
+        if (move_output_volume_slider || move_input_volume_slider || create_mpris_controllers || create_applications_volume_sliders || create_perdevice_volume_sliders || create_balance_slider || create_profile_switcher) {
             if (panel_type === "independent-panel")
                 LibPanel.enable();
             this._panel = LibPanel.main_panel;
@@ -146,17 +159,17 @@ export default class QSAP extends Extension {
                 else if (widget === 'input-volume-slider' && move_input_volume_slider) {
                     this._move_slider(index, this.InputVolumeSlider);
                 }
-                else if (widget === 'mpris-controllers' && create_mpris_controllers && this.settings.get_boolean("mpris-controllers-are-moved")) {
-                    this._move_media_controls(index);
-                }
-                else if (widget === 'mpris-controllers' && create_mpris_controllers && !this.settings.get_boolean("mpris-controllers-are-moved")) {
+                else if (widget === 'mpris-controllers' && create_mpris_controllers) {
                     this._create_media_controls(index);
+                    if (this.settings.get_boolean("mpris-controllers-are-moved")) {
+                        this._remove_base_media_controls();
+                    }
                 }
                 else if (widget === 'applications-volume-sliders' && create_applications_volume_sliders) {
                     this._create_app_mixer(index, this.settings.get_boolean("group-applications-volume-sliders"), this.settings.get_string("applications-volume-sliders-filter-mode"), this.settings.get_strv("applications-volume-sliders-filters"));
                 }
                 else if (widget === "perdevice-volume-sliders" && create_perdevice_volume_sliders) {
-                    this._create_sink_mixer(index, this.settings.get_string("perdevice-volume-sliders-filter-mode"), this.settings.get_strv("perdevice-volume-sliders-filters"));
+                    this._create_sink_mixer(index, this.settings.get_string("perdevice-volume-sliders-filter-mode"), this.settings.get_strv("perdevice-volume-sliders-filters"), this.settings.get_boolean("perdevice-volume-sliders-change-button"), this.settings.get_boolean("perdevice-volume-sliders-change-menu"));
                 }
                 else if (widget === "balance-slider" && create_balance_slider) {
                     this._create_balance_slider(index);
@@ -165,13 +178,9 @@ export default class QSAP extends Extension {
                     this._create_profile_switcher(index);
                 }
             }
-            if (remove_output_volume_slider) {
-                OutputVolumeSlider.visible = false;
-            }
         }
     }
     _cleanup_panel() {
-        OutputVolumeSlider.visible = true;
         if (!this._panel)
             return;
         if (this._profile_switcher) {
@@ -201,12 +210,9 @@ export default class QSAP extends Extension {
             this._panel.removeItem(this._media_section);
             this._media_section = null;
         }
-        if (MediaSection_DateMenu._qsap_moved) {
-            this._panel.removeItem(MediaSection_DateMenu);
-            CalendarMessageList._sectionList.insert_child_at_index(MediaSection_DateMenu, 0);
-            MediaSection_DateMenu.remove_style_class_name('QSAP-media-section');
-            MediaSection_DateMenu.remove_style_class_name('QSAP-media-section-optional');
-            delete MediaSection_DateMenu._qsap_moved;
+        if (MessageView_DateMenu._qsap_media_removed) {
+            MessageView_DateMenu._setupMpris();
+            delete MessageView_DateMenu._qsap_media_removed;
         }
         this._master_volumes.reverse();
         for (const [slider, index] of this._master_volumes) {
@@ -234,18 +240,8 @@ export default class QSAP extends Extension {
         this._panel._grid.set_child_at_index(slider, index);
         this._master_volumes.push([slider, old_index]);
     }
-    _move_media_controls(index) {
-        CalendarMessageList._sectionList.remove_child(MediaSection_DateMenu);
-        this._panel.addItem(MediaSection_DateMenu, 2);
-        this._panel._grid.set_child_at_index(MediaSection_DateMenu, index);
-        MediaSection_DateMenu._qsap_moved = true;
-        MediaSection_DateMenu.add_style_class_name('QSAP-media-section');
-        if (!this.settings.get_boolean('ignore-css')) {
-            MediaSection_DateMenu.add_style_class_name('QSAP-media-section-optional');
-        }
-    }
     _create_media_controls(index) {
-        this._media_section = new MediaSection();
+        this._media_section = new MprisList();
         this._media_section.add_style_class_name('QSAP-media-section');
         if (!this.settings.get_boolean('ignore-css')) {
             this._media_section.add_style_class_name('QSAP-media-section-optional');
@@ -253,8 +249,15 @@ export default class QSAP extends Extension {
         this._panel.addItem(this._media_section, 2);
         this._panel._grid.set_child_at_index(this._media_section, index);
     }
-    _create_app_mixer(index, type, filter_mode, filters) {
-        if (type === "combined") {
+    _remove_base_media_controls() {
+        MessageView_DateMenu._mediaSource.disconnectObject(MessageView_DateMenu);
+        for (const player of MessageView_DateMenu._mediaSource.players) {
+            MessageView_DateMenu._removePlayer(player);
+        }
+        MessageView_DateMenu._qsap_media_removed = true;
+    }
+    _create_app_mixer(index, group, filter_mode, filters) {
+        if (group) {
             this._applications_mixer_combined = new ApplicationsMixerToggle(this.settings, filter_mode, filters);
             this._panel.addItem(this._applications_mixer_combined, 2);
             this._panel._grid.set_child_at_index(this._applications_mixer_combined, index);
@@ -263,8 +266,8 @@ export default class QSAP extends Extension {
             this._applications_mixer = new ApplicationsMixer(this._panel, index, filter_mode, filters, this.settings);
         }
     }
-    _create_sink_mixer(index, filter_mode, filters) {
-        this._sink_mixer = new SinkMixer(this._panel, index, filter_mode, filters);
+    _create_sink_mixer(index, filter_mode, filters, change_button, change_menu) {
+        this._sink_mixer = new SinkMixer(this._panel, index, filter_mode, filters, change_button, change_menu);
     }
     _create_balance_slider(index) {
         this._balance_slider = new BalanceSlider(this.settings);
@@ -275,40 +278,6 @@ export default class QSAP extends Extension {
         this._profile_switcher = new AudioProfileSwitcher(this.settings);
         this._panel.addItem(this._profile_switcher, 1);
         this._panel._grid.set_child_at_index(this._profile_switcher, index);
-    }
-    _set_always_show_input(enabled) {
-        if (enabled) {
-            this._ivs_vis_callback = this.InputVolumeSlider.connect("notify::visible", this._reset_input_slider_vis.bind(this));
-            // make sure to check if the icon should be shown when some events are fired.
-            // we need this because we make the slider always visible, so notify::visible isn't
-            // fired when gnome-shell tries to show it (because it was already visible)
-            this._ivsc_sa_callback = this.InputVolumeSlider._control.connect("stream-added", this._reset_input_slider_vis.bind(this));
-            this._ivsc_sr_callback = this.InputVolumeSlider._control.connect("stream-removed", this._reset_input_slider_vis.bind(this));
-            this._ivsc_dsc_callback = this.InputVolumeSlider._control.connect("default-source-changed", this._reset_input_slider_vis.bind(this));
-            this.InputVolumeSlider.visible = true;
-        }
-        else {
-            if (this._ivs_vis_callback)
-                this.InputVolumeSlider.disconnect(this._ivs_vis_callback);
-            this._ivs_vis_callback = null;
-            if (this._ivsc_sa_callback)
-                this.InputVolumeSlider._control.disconnect(this._ivsc_sa_callback);
-            this._ivsc_sa_callback = null;
-            if (this._ivsc_sr_callback)
-                this.InputVolumeSlider._control.disconnect(this._ivsc_sr_callback);
-            this._ivsc_sr_callback = null;
-            if (this._ivsc_dsc_callback)
-                this.InputVolumeSlider._control.disconnect(this._ivsc_dsc_callback);
-            this._ivsc_dsc_callback = null;
-            this.InputVolumeSlider.visible = this.InputVolumeSlider._shouldBeVisible();
-            this.InputVolumeIndicator.visible = this.InputVolumeSlider._shouldBeVisible();
-        }
-    }
-    _reset_input_slider_vis() {
-        if (!this.InputVolumeSlider.visible) {
-            this.InputVolumeSlider.visible = true;
-        }
-        this.InputVolumeIndicator.visible = this.InputVolumeSlider._shouldBeVisible();
     }
     // Base slider
     // slider: OutputStreamSlider
@@ -338,7 +307,7 @@ export default class QSAP extends Extension {
         box.remove_child(sliderBin);
         const menu_button_visible = slider._menuButton.visible;
         box.remove_child(slider._menuButton);
-        const vbox = new St.BoxLayout({ vertical: true, x_expand: true });
+        const vbox = new St.BoxLayout({ orientation: Clutter.Orientation.VERTICAL, x_expand: true });
         box.insert_child_at_index(vbox, 1);
         const hbox = new St.BoxLayout();
         hbox.add_child(sliderBin);
@@ -386,5 +355,224 @@ export default class QSAP extends Extension {
         delete slider._iconButton._qsap_y_expand;
         delete slider._iconButton._qsap_y_align;
         delete slider._menuButton._qsap_y_expand;
+    }
+    _add_reset_applications_output() {
+        this._action_application_reset_output = OutputVolumeSlider.menu.addAction(_("Reset all applications to default output"), () => {
+            const control = Volume.getMixerControl();
+            for (const stream of control.get_streams()) {
+                if (stream.is_event_stream || !(stream instanceof Gvc.MixerSinkInput)) {
+                    continue;
+                }
+                GLib.spawn_command_line_async(`${get_pactl_path(this.settings)[0]} move-sink-input ${stream.index} @DEFAULT_SINK@`);
+            }
+            if (this._applications_mixer) {
+                for (const slider of this._applications_mixer._slider_manager._sliders.values()) {
+                    slider._checkUsedSink();
+                }
+            }
+        });
+    }
+    _remove_reset_applications_output() {
+        if (this._action_application_reset_output) {
+            this._action_application_reset_output.destroy();
+        }
+        delete this._action_application_reset_output;
+    }
+}
+class ExtensionController {
+    settings;
+    logger;
+    injection_manager;
+    handler_ids;
+    active_patches;
+    pactl_path;
+    output_volume_slider;
+    input_volume_indicator;
+    input_volume_slider;
+    input_visibility;
+    input_is_recursing;
+    constructor(settings, logger, input_volume_indicator, output_volume_slider) {
+        this.settings = settings;
+        this.logger = logger;
+        this.injection_manager = new InjectionManager();
+        this.handler_ids = new Map();
+        this.active_patches = new Map();
+        this.pactl_path = get_pactl_path(settings)[0] || undefined;
+        this.output_volume_slider = output_volume_slider;
+        this.input_volume_indicator = input_volume_indicator;
+        this.input_volume_slider = input_volume_indicator._input;
+        this.input_visibility = false;
+        this.input_is_recursing = false;
+        this.update_renames_list();
+        this.connect_setting("changed::pactl-path", () => {
+            this.pactl_path = get_pactl_path(settings)[0] || undefined;
+        });
+        this.connect_setting("changed::always-show-input-volume-slider", () => {
+            this.set_always_show_input_volume_slider(this.settings.get_boolean("always-show-input-volume-slider"));
+        });
+        this.connect_setting("changed::ignore-virtual-capture-streams", () => {
+            this.set_ignore_virtual_capture_streams(this.settings.get_boolean("ignore-virtual-capture-streams"));
+        });
+        this.connect_setting("changed::remove-output-volume-slider", () => {
+            this.set_remove_output_volume_slider(this.settings.get_boolean("remove-output-volume-slider"));
+        });
+    }
+    connect(object, signal, callback) {
+        let object_map = this.handler_ids.get(object);
+        if (!object_map) {
+            object_map = new Map();
+            this.handler_ids.set(object, object_map);
+        }
+        if (object_map.has(signal)) {
+            this.logger.error(`[BUG] Tried to connect ${signal} on ${object} two times`);
+            return;
+        }
+        const handler_id = object.connect(signal, callback);
+        object_map.set(signal, handler_id);
+    }
+    connect_setting(signal, callback) {
+        this.connect(this.settings, signal, callback);
+        callback();
+    }
+    disconnect(object, signal) {
+        const object_map = this.handler_ids.get(object);
+        const handler_id = object_map?.get(signal);
+        if (handler_id) {
+            object_map.delete(signal);
+            object.disconnect(handler_id);
+        }
+    }
+    update_renames_list() {
+        const control = Volume.getMixerControl();
+        const add_card = (card) => {
+            const renames = this.settings.get_value("profiles-renames").recursiveUnpack();
+            if (!(card.name in renames))
+                renames[card.name] = {};
+            const card_renames = renames[card.name];
+            for (const profile of card.get_profiles()) {
+                if (!(profile.profile in card_renames))
+                    card_renames[profile.profile] = [profile.human_profile, profile.human_profile];
+            }
+            this.settings.set_value("profiles-renames", new GLib.Variant("a{sa{s(ss)}}", renames));
+        };
+        this.connect(control, "card-added", (_, id) => {
+            const card = control.lookup_card_id(id);
+            add_card(card);
+        });
+        for (const card of control.get_cards()) {
+            add_card(card);
+        }
+    }
+    set_ignore_virtual_capture_streams(enable) {
+        const was_active = !!this.active_patches.get("ignore-virtual-capture-streams");
+        if (enable && !was_active) {
+            const self = this;
+            this.injection_manager.overrideMethod(this.input_volume_slider.constructor.prototype, "_shouldBeVisible", wrapped => function () {
+                // early return, so we check for virtual stream only if we would show
+                if (!wrapped.call(this))
+                    return false;
+                if (self.pactl_path) {
+                    spawn([self.pactl_path, "-f", "json", "list", "source-outputs"]).then(result => {
+                        const data = JSON.parse(result);
+                        for (const source_output of data) {
+                            if (source_output["properties"]["node.virtual"] !== "true") {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }).then(should_show => {
+                        const old_value = this.visible;
+                        this.visible = should_show;
+                        if (should_show === old_value) {
+                            // emit even when values are equal because in some cases (when
+                            // both always-show-input-volume-slider and ignore-virtual-capture-streams
+                            // are enabled), the indicator is hidden (and needs to be shown), while
+                            // the slider is visible.
+                            this.notify("visible");
+                        }
+                    }).catch(reason => self.logger.error(reason));
+                    // dangerous ! if the virtual stream check crashes for some reason,
+                    // the user as no way to know that the audio is being recorded.
+                    // but returning `true` causes the indicator to flash briefly, 
+                    // which is not very good
+                    return false;
+                }
+                return true;
+            });
+            this.active_patches.set("ignore-virtual-capture-streams", true);
+        }
+        else if (!enable && was_active) {
+            this.injection_manager.restoreMethod(this.input_volume_slider.constructor.prototype, "_shouldBeVisible");
+            this.active_patches.set("ignore-virtual-capture-streams", false);
+        }
+        const visibility = this.input_volume_slider._shouldBeVisible();
+        this.input_volume_slider.visible = visibility;
+        this.input_volume_indicator.visible = visibility;
+    }
+    set_always_show_input_volume_slider(enable) {
+        const was_active = !!this.active_patches.get("always-show-input-volume-slider");
+        if (enable && !was_active) {
+            this.connect(this.input_volume_slider, "notify::visible", () => this.reset_input_volume_visibility());
+            // make sure to check if the indicator should be shown when the visibility is synced.
+            // we need this because we make the slider always visible, so notify::visible isn't
+            // fired when gnome-shell tries to show it (because it was already visible)
+            const self = this;
+            this.injection_manager.overrideMethod(this.input_volume_slider.constructor.prototype, "_sync", wrapped => function () {
+                const was_visible = this.visible;
+                wrapped.call(this);
+                if (was_visible && this._shouldBeVisible()) {
+                    self.reset_input_volume_visibility();
+                }
+            });
+            this.active_patches.set("always-show-input-volume-slider", true);
+        }
+        else if (!enable && was_active) {
+            this.disconnect(this.input_volume_slider, "notify::visible");
+            this.injection_manager.restoreMethod(this.input_volume_slider.constructor.prototype, "_sync");
+            this.active_patches.set("always-show-input-volume-slider", false);
+            this.input_volume_slider._maybeShowInput();
+            this.input_volume_slider.visible = this.input_volume_slider._shouldBeVisible();
+        }
+        this.reset_input_volume_visibility();
+    }
+    reset_input_volume_visibility() {
+        if (this.input_is_recursing) {
+            // ensure the indicator has the correct visibility
+            this.input_volume_indicator.visible = this.input_visibility;
+            this.input_is_recursing = false;
+        }
+        else {
+            this.input_visibility = this.input_volume_slider.visible;
+            this.input_volume_indicator.visible = this.input_visibility;
+            if (this.settings.get_boolean("always-show-input-volume-slider") && !this.input_volume_slider.visible) {
+                this.input_is_recursing = true;
+                this.input_volume_slider.visible = true;
+            }
+        }
+    }
+    set_remove_output_volume_slider(enable) {
+        const was_active = !!this.active_patches.get("remove-output-volume-slider");
+        if (enable && !was_active) {
+            this.injection_manager.overrideMethod(this.output_volume_slider.constructor.prototype, "_sync", wrapped => function () {
+                wrapped.call(this);
+                this.visible = false;
+            });
+            this.active_patches.set("remove-output-volume-slider", true);
+        }
+        else if (!enable && was_active) {
+            this.injection_manager.restoreMethod(this.output_volume_slider.constructor.prototype, "_sync");
+            this.active_patches.set("remove-output-volume-slider", false);
+        }
+        this.output_volume_slider._sync();
+    }
+    destroy() {
+        this.set_ignore_virtual_capture_streams(false);
+        this.set_always_show_input_volume_slider(false);
+        for (const [object, object_map] of this.handler_ids.entries()) {
+            for (const handler_id of object_map.values()) {
+                object.disconnect(handler_id);
+            }
+        }
+        this.injection_manager.clear();
     }
 }

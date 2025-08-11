@@ -1,5 +1,5 @@
 import Adw from 'gi://Adw';
-import type GLib from 'gi://GLib';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
@@ -7,9 +7,9 @@ import Gtk from 'gi://Gtk';
 
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import { get_settings, get_stack, rsplit, split } from './libs/libpanel/utils.js';
+import { get_settings, get_stack, rsplit, split, type Constructor } from './libs/libpanel/utils.js';
 import { update_settings } from "./libs/preferences.js";
-import { get_pactl_path, type Constructor } from "./libs/utils.js";
+import { get_pactl_path } from "./libs/utils.js";
 
 export default class QSAPPreferences extends ExtensionPreferences {
     async fillPreferencesWindow(window: Adw.PreferencesWindow) {
@@ -33,7 +33,7 @@ export default class QSAPPreferences extends ExtensionPreferences {
             {
                 title: _("Where the panel should be"),
                 fields: [
-                    ["independent-panel", _("Independant panel")],
+                    ["independent-panel", _("Independent panel")],
                     ["merged-panel", _("In the main panel")],
                     ["separate-indicator", _("In a separate indicator")],
                 ],
@@ -61,6 +61,11 @@ export default class QSAPPreferences extends ExtensionPreferences {
                 subtitle: _("Show even when there is no application recording audio")
             }
         );
+        const ignore_virtual_capture_streams = main_group.add_switch("ignore-virtual-capture-streams",
+            {
+                title: _("Don't show the microphone indicator when there is only virtual captures")
+            }
+        );
         main_group.add_switch("remove-output-volume-slider",
             {
                 title: _("Remove the main output volume slider"),
@@ -70,6 +75,12 @@ export default class QSAPPreferences extends ExtensionPreferences {
         main_group.add_switch("master-volume-sliders-show-current-device",
             {
                 title: _("Show the currently selected device for the main volume sliders"),
+            }
+        );
+        main_group.add_switch("add-button-applications-output-reset-to-default",
+            {
+                title: _("Add a button to reset all applications to the default output"),
+                subtitle: _("This button can be found in the device chooser of the main output slider")
             }
         );
 
@@ -90,15 +101,30 @@ export default class QSAPPreferences extends ExtensionPreferences {
         profile_switcher_group.add_switch("autohide-profile-switcher",
             {
                 title: _("Auto-hide"),
-                subtitle: _("Hide the profile switcher when the current device only have one profile")
+                subtitle: _("Hide the profile switcher when the current device only has one profile")
             }
         );
+
+        const perdevice_volume_sliders_group = new ListBox(settings);
+        perdevice_volume_sliders_group.add_switch("perdevice-volume-sliders-change-button",
+            {
+                title: _("Add a 'set as active' button"),
+                subtitle: _(`This button, added on each device slider, has the same effect as clicking on that device in the main volume slider menu`)
+            }
+        );
+        const perdevice_volume_sliders_change_menu = perdevice_volume_sliders_group.add_switch("perdevice-volume-sliders-change-menu",
+            {
+                title: _("Replace the 'set as active' button with a submenu"),
+                subtitle: _(`For devices which have multiple ports, the button will be replaced by a submenu to choose which port will be active`)
+            }
+        );
+        settings.bind("perdevice-volume-sliders-change-button", perdevice_volume_sliders_change_menu, "sensitive", Gio.SettingsBindFlags.DEFAULT);
 
         const mpris_controllers_group = new ListBox(settings);
         mpris_controllers_group.add_switch("mpris-controllers-are-moved",
             {
                 title: _("Move media controls"),
-                subtitle: _("Move the media controls from the notifications panel instead of creating a new one")
+                subtitle: _(`Move the media controls from the notifications panel instead of creating a new one`)
             }
         );
 
@@ -128,7 +154,8 @@ export default class QSAPPreferences extends ExtensionPreferences {
             .add_switch("move-output-volume-slider");
         widgets_order_group
             .add_reorderable("perdevice-volume-sliders", { title: _("Per-device volume sliders") })
-            .add_switch("create-perdevice-volume-sliders");
+            .add_switch("create-perdevice-volume-sliders")
+            .add_subgroup(perdevice_volume_sliders_group);
         const balance_slider = widgets_order_group
             .add_reorderable("balance-slider", { title: _("Audio balance slider") })
             .add_switch("create-balance-slider");
@@ -162,6 +189,16 @@ export default class QSAPPreferences extends ExtensionPreferences {
                     balance_slider.switch!.sensitive = false;
                 }
                 balance_slider.subtitle = subtitle;
+            },
+            (found: boolean) => {
+                let subtitle = _("This include for example the echo cancellation module");
+                if (found) {
+                    ignore_virtual_capture_streams.sensitive = true;
+                } else {
+                    subtitle += "\n" + _('<span color="red" weight="bold">This feature needs <tt>pactl</tt></span>');
+                    ignore_virtual_capture_streams.sensitive = false;
+                }
+                ignore_virtual_capture_streams.subtitle = subtitle;
             }
         ];
 
@@ -182,7 +219,7 @@ export default class QSAPPreferences extends ExtensionPreferences {
         const perdevice_volume_sliders_filters_group = new FilterPreferencesGroup(settings, "perdevice-volume-sliders-filters", "perdevice-volume-sliders-filter-mode",
             {
                 title: _("Per-device sliders filtering"),
-                description: _("Allow you to filter the per-device volume sliders. The content of the filters are <b>regexes</b> and are applied to the device's display name and pulseaudio name."),
+                description: _("Allows you to filter the per-device volume sliders. The content of the filters are <b>regexes</b> and are applied to the device's display name and pulseaudio name."),
                 placeholder: _("Device name"),
             }
         );
@@ -191,7 +228,7 @@ export default class QSAPPreferences extends ExtensionPreferences {
         const applications_volume_sliders_filters_group = new FilterPreferencesGroup(settings, "applications-volume-sliders-filters", "applications-volume-sliders-filter-mode",
             {
                 title: _("Application mixer filtering"),
-                description: _("Allow you to filter the applications that show up in the application mixer <b>using regexes</b>"),
+                description: _("Allows you to filter the applications that show up in the application mixer <b>using regexes</b>"),
                 placeholder: _("Application name"),
             }
         );
@@ -200,7 +237,49 @@ export default class QSAPPreferences extends ExtensionPreferences {
         page.add(widgets_order_group);
         page.add(perdevice_volume_sliders_filters_group);
         page.add(applications_volume_sliders_filters_group);
+        page.add(this.make_profile_renamer(settings));
         return page;
+    }
+
+    private make_profile_renamer(settings: Gio.Settings): PreferencesGroup {
+        const group = new PreferencesGroup(settings, {
+            title: _("Profile renamer"),
+            description: _("Allows you to rename profiles of audio devices (only effective in the profile switcher)")
+        });
+
+        // Can't use Gvc in prefs, we have to rely on infos saved by the extension.
+        const renames: Record<string, Record<string, [string, string]>> = settings.get_value("profiles-renames").recursiveUnpack();
+
+        for (const [card, profiles] of Object.entries(renames)) {
+            if (Object.keys(profiles).length === 0) continue;
+            const card_row = new Adw.ExpanderRow({ title: card });
+
+            for (const [profile, [original_name, display_name]] of Object.entries(profiles)) {
+                const row = new Adw.EntryRow({ title: original_name, text: display_name, show_apply_button: true });
+                row.connect("apply", () => {
+                    const renames: Record<string, Record<string, [string, string]>> = settings.get_value("profiles-renames").recursiveUnpack();
+                    renames[card][profile] = [original_name, row.text];
+                    settings.set_value("profiles-renames", new GLib.Variant("a{sa{s(ss)}}", renames));
+                });
+
+                const reset_button = new Gtk.Button({
+                    icon_name: "view-refresh-symbolic",
+                    has_frame: false,
+                    tooltip_text: _("Restore original name"),
+                });
+                reset_button.connect("clicked", () => {
+                    row.text = original_name;
+                    row.emit("apply");
+                });
+                row.add_suffix(reset_button);
+
+                card_row.add_row(row);
+            }
+
+            group.add(card_row);
+        }
+
+        return group;
     }
 
     makeLibpanelSettingsPage(settings: Gio.Settings): Adw.PreferencesPage {
@@ -210,7 +289,7 @@ export default class QSAPPreferences extends ExtensionPreferences {
         });
         const group = new PreferencesGroup(settings, {
             title: _("LibPanel settings"),
-            description: _("Those settings are not specific to this extension, they apply to every panels"),
+            description: _("These settings are not specific to this extension, they apply to every panel"),
         });
 
         group.add_switch("single-column",
@@ -366,6 +445,7 @@ const PreferencesGroup = PreferencesRowList(GObject.registerClass(class Preferen
         this.settings = settings;
     }
 }));
+type PreferencesGroup = InstanceType<typeof PreferencesGroup>;
 
 const ListBox = PreferencesRowList(GObject.registerClass(class ListBox extends Gtk.ListBox {
     settings: Gio.Settings;
@@ -395,10 +475,10 @@ const FilterPreferencesGroup = GObject.registerClass(class FilterPreferencesGrou
         this.add_combobox(mode_key,
             {
                 title: _("Filtering mode"),
-                subtitle: _("On blacklist mode, matching elements are removed from the list. On whitelist mode, only matching elements will be shown"),
+                subtitle: _("On blocklist mode, matching elements are removed from the list. On allowlist mode, only matching elements will be shown"),
                 fields: [
-                    ['blacklist', _("Blacklist")],
-                    ['whitelist', _("Whitelist")],
+                    ['blacklist', _("Blocklist")],
+                    ['whitelist', _("Allowlist")],
                 ]
             }
         );

@@ -1,3 +1,9 @@
+gnome-shell-extension-quick-settings-audio-panel (1.0.Policorp-3) stable; urgency=medium
+
+  * Add versão 94 com tradução e ajuste Policorp
+
+ -- Lucas Salles <lucas.salles@policorp.com.br>  Thu, 31 Jul 2025 09:45:27 -0400
+
 gnome-shell-extension-quick-settings-audio-panel (1.0.2) stable; urgency=medium
 
   * add tradução pt-br
